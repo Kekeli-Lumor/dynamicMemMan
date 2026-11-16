@@ -53,3 +53,21 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Build outputs
+*.o
+*.out
+*.a
+*.so
+build/
+main
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Debug
+*.dSYM/
+core
+vgcore.*
