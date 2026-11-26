@@ -39,7 +39,7 @@ void *smalloc(size_t num_bytes){
     }
 
     common_header_t *prev;
-    common_header_t *node = fl_first_fit(num_bytes, &prev);
+    common_header_t *node = fl_best_fit(num_bytes, &prev);
     
     if (node == NULL){ //Failed to find contiguous memory block large enough for allocation 
         return NULL;
@@ -49,6 +49,10 @@ void *smalloc(size_t num_bytes){
     return (char*)node + sizeof(common_header_t);
 }
 
+static void allocator_merge(common_header_t *prev, common_header_t *block) {
+    fl_merge(prev, block);
+}
+
 //Used to free memory
 void sfree(void *mem_ptr){
     if (mem_ptr == NULL){
@@ -56,7 +60,8 @@ void sfree(void *mem_ptr){
     }
     char *header_addr = (char*)mem_ptr - sizeof(common_header_t);
     common_header_t *block = (common_header_t*)header_addr;
-    fl_insert_freed_block(block);
+    common_header_t *prev = fl_ordered_insert(block);
+    allocator_merge(prev, block);
 }
 
 void allocator_list_dump(void){
@@ -71,4 +76,8 @@ size_t allocator_free_mem_size(void){
 
 size_t allocator_req_mem(size_t payload){
     return fl_req_mem(payload);
+}
+
+void allocator_stats(size_t *N, size_t *F, size_t *L){
+    fl_stats(N, F, L);
 }
