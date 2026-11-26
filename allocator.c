@@ -24,4 +24,51 @@ void *get_mem_block(void *addr, size_t mem_size) {
     return h_ptr;               // otherwise return the allocated memory
 }
 
+//Used to prevent second memory block being assigned when all memory is allocated
+static int initialised = 0; 
 
+//Used to allocate memory
+void *smalloc(size_t num_bytes){
+    if (!initialised){
+        void *mem = get_mem_block(NULL, MEM_SIZE);
+        if (mem == NULL){
+            return NULL;
+        }
+        init_free_list(mem, MEM_SIZE);
+        initialised = 1;
+    }
+
+    common_header_t *prev;
+    common_header_t *node = fl_first_fit(num_bytes, &prev);
+    
+    if (node == NULL){ //Failed to find contiguous memory block large enough for allocation 
+        return NULL;
+    }
+
+    fl_split(num_bytes, node, prev);
+    return (char*)node + sizeof(common_header_t);
+}
+
+//Used to free memory
+void sfree(void *mem_ptr){
+    if (mem_ptr == NULL){
+        return;
+    }
+    char *header_addr = (char*)mem_ptr - sizeof(common_header_t);
+    common_header_t *block = (common_header_t*)header_addr;
+    fl_insert_freed_block(block);
+}
+
+void allocator_list_dump(void){
+    fl_dump();
+}
+
+
+size_t allocator_free_mem_size(void){
+    return fl_free_mem_size();
+}
+
+
+size_t allocator_req_mem(size_t payload){
+    return fl_req_mem(payload);
+}
